@@ -26,9 +26,9 @@ A universally user-friendly voice chatbot web app built with Next.js that provid
    npm install
    ```
 3. Create `.env.local` file with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   OPENAI_MODEL=gpt-4o-mini
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local and add your OpenAI API key
    ```
 4. Run the development server:
    ```bash
@@ -36,9 +36,21 @@ A universally user-friendly voice chatbot web app built with Next.js that provid
    ```
 5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Deployment
+### Test Prompts to Try
 
-Deploy to Vercel by connecting your GitHub repository and setting the environment variables in the Vercel dashboard.
+- "What's the weather like today?"
+- "Explain quantum computing in simple terms"
+- "Tell me a short joke"
+- "How do I make a good cup of coffee?"
+
+## Deployment to Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard:
+   - `OPENAI_API_KEY`: Your OpenAI API key
+   - `OPENAI_MODEL` (optional): Model to use (defaults to gpt-4o-mini)
+4. Deploy!
 
 ### Required Environment Variables
 
@@ -47,13 +59,40 @@ Deploy to Vercel by connecting your GitHub repository and setting the environmen
 
 ## Usage
 
-1. Allow microphone permissions when prompted
+1. Allow microphone permissions when prompted (Chrome/Edge recommended)
 2. Click the microphone button to start voice input
 3. Speak your message or use the text input as fallback
 4. The assistant will respond with both text and speech
 
+### Keyboard Shortcuts
+
+- `Ctrl + Space`: Toggle microphone on/off
+
 ## Browser Compatibility
 
-- Voice input: Chrome, Edge, Safari (with webkit prefix)
-- Text-to-speech: All modern browsers
-- Text fallback: All browsers
+- **Voice input**: Chrome, Edge, Safari (with webkit prefix)
+- **Text-to-speech**: All modern browsers
+- **Text fallback**: All browsers
+
+## Project Structure
+
+```
+voice-chatbot/
+├── pages/
+│   ├── index.js          # Main UI with voice chat interface
+│   └── api/
+│       └── chat.js       # OpenAI API proxy endpoint
+├── public/
+│   └── favicon.ico       # App icon
+├── package.json          # Dependencies and scripts
+├── next.config.js        # Next.js configuration
+├── .env.example          # Environment variable template
+└── README.md            # This file
+```
+
+## Security
+
+- API keys are never exposed to the client
+- All OpenAI requests go through the server-side API route
+- Environment variables are handled securely
+- No sensitive data is stored in the repository
