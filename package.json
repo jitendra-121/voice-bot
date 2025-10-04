@@ -1,0 +1,32 @@
+{
+  "name": "voice-chatbot",
+  "version": "1.0.0",
+  "description": "A universally user-friendly voice chatbot web app built with Next.js",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [
+    "voice",
+    "chatbot",
+    "nextjs",
+    "speech-recognition",
+    "text-to-speech",
+    "openai",
+    "accessibility"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^14.0.0"
+  }
+}
