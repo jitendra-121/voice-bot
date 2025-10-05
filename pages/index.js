@@ -10,10 +10,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   // Refs
   const recognitionRef = useRef(null);
   const conversationEndRef = useRef(null);
+  const maxRetries = 2;
 
   // Check for speech recognition support
   useEffect(() => {
@@ -51,12 +53,57 @@ export default function Home() {
       };
 
       recognition.onerror = (event) => {
-        setError(`Speech recognition error: ${event.error}`);
+        console.error('Speech recognition error:', event.error);
+        let errorMessage = '';
+        
+        switch(event.error) {
+          case 'network':
+            if (retryCount < maxRetries) {
+              errorMessage = `Network issue detected. Retrying... (Attempt ${retryCount + 1}/${maxRetries})`;
+              setError(errorMessage);
+              // Auto-retry after a short delay
+              setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+                setError('');
+                try {
+                  recognitionRef.current?.start();
+                } catch (e) {
+                  console.error('Retry failed:', e);
+                }
+              }, 1000);
+              return;
+            } else {
+              errorMessage = 'Speech recognition unavailable. Please use text input below or check your internet connection and try again later.';
+              setRetryCount(0); // Reset retry count
+            }
+            break;
+          case 'not-allowed':
+          case 'permission-denied':
+            errorMessage = 'Microphone access denied. Please enable microphone permissions in your browser settings and reload the page.';
+            break;
+          case 'no-speech':
+            errorMessage = 'No speech detected. Please try speaking again.';
+            setIsListening(false);
+            return; // Don't stop completely, user can try again
+          case 'aborted':
+            // Don't show error for aborted, it's usually intentional
+            setIsListening(false);
+            return;
+          case 'audio-capture':
+            errorMessage = 'No microphone found. Please connect a microphone and try again.';
+            break;
+          default:
+            errorMessage = `Speech recognition error: ${event.error}. Please use text input below.`;
+        }
+        
+        setError(errorMessage);
         setIsListening(false);
       };
 
       recognition.onend = () => {
         setIsListening(false);
+        // Reset retry count on successful end
+        setRetryCount(0);
       };
 
       recognitionRef.current = recognition;
@@ -71,7 +118,7 @@ export default function Home() {
   // Start/stop voice recognition
   const toggleListening = () => {
     if (!speechSupported) {
-      setError('Speech recognition not supported in this browser');
+      setError('Speech recognition not supported in this browser. Please use the text input below.');
       return;
     }
 
@@ -80,7 +127,14 @@ export default function Home() {
     } else {
       setTranscript('');
       setInterimTranscript('');
-      recognitionRef.current?.start();
+      setError(''); // Clear any previous errors
+      
+      try {
+        recognitionRef.current?.start();
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        setError('Could not start speech recognition. Please use the text input below.');
+      }
     }
   };
 
@@ -180,6 +234,11 @@ export default function Home() {
             : "Speech not supported - please use text input"
           }
         </p>
+        {speechSupported && (
+          <div style={styles.infoBanner}>
+            💡 <strong>Tip:</strong> If voice input doesn't work, it may be a temporary network issue with the browser's speech service. Text input always works!
+          </div>
+        )}
       </header>
 
       <main style={styles.main}>
@@ -276,7 +335,14 @@ export default function Home() {
         {/* Error Display */}
         {error && (
           <div style={styles.error} role="alert">
-            {error}
+            <span>{error}</span>
+            <button 
+              onClick={() => setError('')}
+              style={styles.errorCloseButton}
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -313,6 +379,16 @@ const styles = {
     margin: '0.5rem 0 0 0',
     color: '#666',
     fontSize: '1rem',
+  },
+  infoBanner: {
+    margin: '0.75rem auto 0',
+    padding: '0.5rem 1rem',
+    backgroundColor: '#e3f2fd',
+    color: '#1565c0',
+    borderRadius: '4px',
+    fontSize: '0.9rem',
+    maxWidth: '600px',
+    textAlign: 'left',
   },
   main: {
     maxWidth: '800px',
@@ -364,7 +440,9 @@ const styles = {
     width: '60px',
     height: '60px',
     borderRadius: '50%',
-    border: '2px solid #0070f3',
+    borderWidth: '2px',
+    borderStyle: 'solid',
+    borderColor: '#0070f3',
     backgroundColor: '#fff',
     fontSize: '1.5rem',
     cursor: 'pointer',
@@ -432,7 +510,20 @@ const styles = {
     color: '#c62828',
     border: '1px solid #ffcdd2',
     borderRadius: '4px',
-    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  },
+  errorCloseButton: {
+    background: 'none',
+    border: 'none',
+    color: '#c62828',
+    cursor: 'pointer',
+    fontSize: '1.2rem',
+    padding: '0',
+    lineHeight: '1',
+    minWidth: '20px',
   },
   hint: {
     textAlign: 'center',
