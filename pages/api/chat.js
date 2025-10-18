@@ -5,18 +5,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Extract text and history from request body
-    const { text, history = [] } = req.body;
+    // Extract text, history, and model from request body
+    const { text, history = [], model = 'gpt-4o' } = req.body;
 
     // Validate required text parameter
     if (!text || typeof text !== 'string') {
       return res.status(400).json({ error: 'Text parameter is required' });
     }
 
-    // Check for OpenAI API key
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Check for GitHub API key
+    const apiKey = process.env.GITHUB_TOKEN;
     if (!apiKey) {
-      console.error('OPENAI_API_KEY environment variable is not set');
+      console.error('GITHUB_TOKEN environment variable is not set');
       return res.status(500).json({ error: 'Server configuration error' });
     }
 
@@ -59,18 +59,18 @@ When answering questions:
     // Construct messages array with system prompt, history, and new message
     const messages = [systemPrompt, ...history, userMessage];
 
-    // Get model from environment or use default
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+    // Use the model from request body, or fallback to environment variable, or default
+    const selectedModel = model || process.env.GITHUB_MODEL || 'gpt-4o';
 
-    // Make request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Make request to GitHub Models API
+    const response = await fetch('https://models.inference.ai.azure.com/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: model,
+        model: selectedModel,
         messages: messages,
         max_tokens: 1000,
         temperature: 0.7,
@@ -79,7 +79,7 @@ When answering questions:
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
+      console.error('GitHub Models API error:', response.status, errorData);
       return res.status(response.status).json({ 
         error: 'Failed to get response from AI service' 
       });
@@ -91,7 +91,7 @@ When answering questions:
     const reply = data.choices?.[0]?.message?.content;
     
     if (!reply) {
-      console.error('No reply received from OpenAI API');
+      console.error('No reply received from GitHub Models API');
       return res.status(500).json({ error: 'No response received' });
     }
 
